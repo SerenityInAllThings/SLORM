@@ -1,7 +1,5 @@
 ﻿using SLORM.Application.Enums;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Runtime.CompilerServices;
 
 namespace SLORM.Application.QueryBuilders
 {

@@ -1,10 +1,11 @@
 ﻿using LightInject;
 using SLORM.Application.QueryBuilders;
 using SLORM.Application.QueryExecutors;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using SLORM.Application.ValueObjects;
+using System.Runtime.CompilerServices;
 
+[assembly: InternalsVisibleTo("SLORM.Application.UnitTests")]
+[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 namespace SLORM.Application
 {
     public static class Lifecycle
@@ -17,16 +18,25 @@ namespace SLORM.Application
 
         public static void Initialize()
         {
-            var container = new ServiceContainer();
+            CreateContainer();
+            RegisterTypes();
+        }
 
+        internal static void CreateContainer()
+        {
+            Container = new ServiceContainer();
+        }
+
+        internal static void RegisterTypes()
+        {
             // Registering general services
-            container.Register<IQueryBuilderResolver, QueryBuilderResolver>();
-            container.Register<IQueryExecutorResolver, QueryExecutorResolver>();
+            Container.Register<IQueryBuilderResolver, QueryBuilderResolver>();
+            Container.Register<IQueryExecutorResolver, QueryExecutorResolver>();
             // Registering SQL Server services
-            container.Register<IQueryBuilder, SQLServerQueryBuilder>(SQLServerKey);
-            container.Register<IQueryExecutor, SQLServerQueryExecutor>(SQLServerKey);
+            Container.Register<IQueryBuilder, SQLServerQueryBuilder>(SQLServerKey);
+            Container.Register<IQueryExecutor, SQLServerQueryExecutor>(SQLServerKey);
 
-            Container = container;
+            Container.Register<ISQLServerDataTypeDeterminator, SQLServerDataTypeDeterminator>();
         }
     }
 }

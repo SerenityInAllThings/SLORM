@@ -2,9 +2,13 @@ using Moq;
 using SLORM.Application.Contexts;
 using SLORM.Application.Enums;
 using SLORM.Application.Exceptions;
+using SLORM.Application.QueryExecutors;
+using SLORM.Application.ValueObjects;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlClient;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace SLORM.Application.UnitTests.Contexts
@@ -20,8 +24,9 @@ namespace SLORM.Application.UnitTests.Contexts
         public void Constructor_WhenSqlServerProvider_ShouldReturnInstance(string connectionString)
         {
             // Arrange
-            Lifecycle.Initialize();
-            var dbConnectionMock = new Mock<IDbConnection>();
+            var queryExecutorResolverMock = GetSimpleQueryExecutorResolverMock();
+            Lifecycle.Container.RegisterInstance(typeof(IQueryExecutorResolver), queryExecutorResolverMock);
+            var dbConnectionMock = new Mock<DbConnection>();
             dbConnectionMock.Setup(conn => conn.ConnectionString).Returns(connectionString);
             // Act
             var ctx = new SLORMContext(dbConnectionMock.Object);
@@ -44,7 +49,7 @@ namespace SLORM.Application.UnitTests.Contexts
         {
             // Arrange
             Lifecycle.Initialize();
-            var dbConnectionMock = new Mock<IDbConnection>();
+            var dbConnectionMock = new Mock<DbConnection>();
             dbConnectionMock.Setup(conn => conn.ConnectionString).Returns(connectionString);
             // Act/Assert
             Assert.Throws<UnknownSQLProviderException>(() => new SLORMContext(dbConnectionMock.Object));
@@ -66,10 +71,32 @@ namespace SLORM.Application.UnitTests.Contexts
         {
             // Arrange
             Lifecycle.Initialize();
-            var dbConnectionMock = new Mock<IDbConnection>();
+            var dbConnectionMock = new Mock<DbConnection>();
             dbConnectionMock.Setup(conn => conn.ConnectionString).Returns(connectionString);
             // Act/Assert
             Assert.Throws<UnknownSQLProviderException>(() => new SLORMContext(dbConnectionMock.Object));
+        }
+
+        private IQueryExecutor GetSimpleQueryExecutorMock()
+        {
+            var queryExecutorMock = new Mock<IQueryExecutor>();
+            ICollection<TableColumn> tableColumns = new List<TableColumn>();
+            var response = Task.FromResult(tableColumns);
+            queryExecutorMock
+                .Setup(qe => qe.GetTableColumns(It.IsAny<DbConnection>(), It.IsAny<string>()))
+                .Returns(response);
+
+            return queryExecutorMock.Object;
+        }
+
+        private IQueryExecutorResolver GetSimpleQueryExecutorResolverMock()
+        {
+            var queryExecutorMock = GetSimpleQueryExecutorMock();
+            var queryExecutorResolverMock = new Mock<IQueryExecutorResolver>();
+            queryExecutorResolverMock
+                .Setup(qer => qer.GetQueryExecutorFromProviderType(It.IsAny<SQLProvider>()))
+                .Returns(queryExecutorMock);
+            return queryExecutorResolverMock.Object;
         }
     }
 }

@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SLORM.Application", "SLORM.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SLORM.Application.UnitTests", "SLORM.Application.UnitTests\SLORM.Application.UnitTests.csproj", "{B6E2A723-9FE8-4AB2-8B72-1C76CD670A49}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SLORM.Application.IntegrationTests", "SLORM.Application.IntegrationTests\SLORM.Application.IntegrationTests.csproj", "{C336BC0D-5DCA-432D-AD57-5A64D2B24C60}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,6 +43,18 @@ Global
 		{B6E2A723-9FE8-4AB2-8B72-1C76CD670A49}.Release|x64.Build.0 = Release|Any CPU
 		{B6E2A723-9FE8-4AB2-8B72-1C76CD670A49}.Release|x86.ActiveCfg = Release|Any CPU
 		{B6E2A723-9FE8-4AB2-8B72-1C76CD670A49}.Release|x86.Build.0 = Release|Any CPU
+		{C336BC0D-5DCA-432D-AD57-5A64D2B24C60}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C336BC0D-5DCA-432D-AD57-5A64D2B24C60}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C336BC0D-5DCA-432D-AD57-5A64D2B24C60}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C336BC0D-5DCA-432D-AD57-5A64D2B24C60}.Debug|x64.Build.0 = Debug|Any CPU
+		{C336BC0D-5DCA-432D-AD57-5A64D2B24C60}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C336BC0D-5DCA-432D-AD57-5A64D2B24C60}.Debug|x86.Build.0 = Debug|Any CPU
+		{C336BC0D-5DCA-432D-AD57-5A64D2B24C60}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C336BC0D-5DCA-432D-AD57-5A64D2B24C60}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C336BC0D-5DCA-432D-AD57-5A64D2B24C60}.Release|x64.ActiveCfg = Release|Any CPU
+		{C336BC0D-5DCA-432D-AD57-5A64D2B24C60}.Release|x64.Build.0 = Release|Any CPU
+		{C336BC0D-5DCA-432D-AD57-5A64D2B24C60}.Release|x86.ActiveCfg = Release|Any CPU
+		{C336BC0D-5DCA-432D-AD57-5A64D2B24C60}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

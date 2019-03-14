@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
+using System.Threading.Tasks;
 using SLORM.Application.QueryBuilders;
 using SLORM.Application.ValueObjects;
 
@@ -8,25 +10,45 @@ namespace SLORM.Application.QueryExecutors
 {
     internal class SQLServerQueryExecutor : IQueryExecutor
     {
-        private readonly IQueryBuilder queryBuilder;
+        private static readonly string dataTypeColumnName = "DATA_TYPE";
+        private static readonly string columnNameColumnName = "COLUMN_NAME";
 
-        public SQLServerQueryExecutor(IQueryBuilderResolver queryBuilderResolver)
+        private readonly IQueryBuilder queryBuilder;
+        private readonly ISQLServerDataTypeDeterminator dataTypeDeterminator;
+
+        public SQLServerQueryExecutor(IQueryBuilderResolver queryBuilderResolver, ISQLServerDataTypeDeterminator dataTypeDeterminator)
         {
+            if (queryBuilderResolver == null)
+                throw new ArgumentNullException(nameof(queryBuilderResolver));
+
             this.queryBuilder = queryBuilderResolver.ResolveFromSQLProvider(Enums.SQLProvider.SQLServer);
+            this.dataTypeDeterminator = dataTypeDeterminator ?? throw new ArgumentNullException(nameof(dataTypeDeterminator));
         }
 
-        public ICollection<TableColumn> GetTableColumns(IDbConnection connection, string tableName)
+        public async Task<ICollection<TableColumn>> GetTableColumns(DbConnection connection, string tableName)
         {
             if (connection == null)
                 throw new ArgumentNullException(nameof(connection));
             if (string.IsNullOrWhiteSpace(tableName))
                 throw new ArgumentNullException(nameof(tableName));
 
-            var query = queryBuilder.GetTableDescriptionQuery(tableName);
+            var columnList = new List<TableColumn>();
+            using (var query = queryBuilder.GetTableDescriptionQuery(tableName))
+            {
+                connection.Open();
+                query.Connection = connection;
+                var reader = await query.ExecuteReaderAsync();
+                
+                while(reader.Read())
+                {
+                    var columnName = reader[columnNameColumnName] as string;
+                    var rawColumnType = reader[dataTypeColumnName] as string;
+                    var parsedType = dataTypeDeterminator.FromDataTypeField(rawColumnType);
+                    columnList.Add(new TableColumn(columnName, parsedType));
+                }
+            }
 
-            connection.Open();
-
-            return new List<TableColumn>();
+            return columnList;
         }
     }
 }

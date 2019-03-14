@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Data.Common;
+using System.Runtime.CompilerServices;
 
 namespace SLORM.Application.QueryBuilders
 {
     internal interface IQueryBuilder
     {
-        string GetTableDescriptionQuery(string tableName);
+        DbCommand GetTableDescriptionQuery(string tableName);
     }
 }

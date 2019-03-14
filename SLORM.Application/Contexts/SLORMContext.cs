@@ -13,24 +13,30 @@ namespace SLORM.Application.Contexts
 {
     public class SLORMContext
     {
-        private readonly string tableName;
-        private IDbConnection connection { get; set; }
+        public string TableName { get; private set; }
+        private DbConnection connection { get; set; }
         private SQLProvider provider { get; set; }
         private IQueryExecutor queryExecutor { get; set; }
-        private ICollection<string> columnsToSelect { get; set; }
         private ICollection<TableColumn> columnsInTable { get; set; }
+        private ICollection<TableColumn> columnsToGroupBy { get; set; }
+        private ICollection<TableColumn> columnsToCount { get; set; }
+        private ICollection<TableColumn> columnsToFilter { get; set; }
+        private ICollection<TableColumn> columnsToOrderBy { get; set; }
 
-        public SLORMContext(IDbConnection connection)
+        public SLORMContext(DbConnection connection, string tableName)
         {
             this.connection = connection ?? throw new ArgumentNullException(nameof(connection));
             this.provider = getSQLProviderFromConnectionString();
-            this.tableName = getTableNameFromConnectionString();
-            this.columnsToSelect = new List<string>();
+            this.TableName = !string.IsNullOrWhiteSpace(tableName) ? tableName : throw new ArgumentNullException(nameof(tableName));
+            this.columnsToGroupBy = new List<TableColumn>();
+            this.columnsToCount = new List<TableColumn>();
+            this.columnsToFilter = new List<TableColumn>();
+            this.columnsToOrderBy = new List<TableColumn>();
 
             var queryExecutorResolver = (IQueryExecutorResolver)Lifecycle.Container.GetInstance(typeof(IQueryExecutorResolver));
             this.queryExecutor = queryExecutorResolver.GetQueryExecutorFromProviderType(this.provider);
 
-            this.columnsInTable = queryExecutor.GetTableColumns(connection, tableName);
+            this.columnsInTable = queryExecutor.GetTableColumns(connection, tableName).Result;
         }
 
         private SQLProvider getSQLProviderFromConnectionString()
@@ -39,37 +45,6 @@ namespace SLORM.Application.Contexts
                 return SQLProvider.SQLServer;
             else
                 throw new UnknownSQLProviderException(connection.ConnectionString);
-        }
-
-        private string getTableNameFromConnectionString()
-        {
-            switch (provider)
-            {
-                case SQLProvider.SQLServer:
-                    return getTableNameFromSQLServerConnectionString(connection.ConnectionString);
-                default:
-                    throw new UnknownSQLProviderException(connection.ConnectionString);
-            }
-        }
-
-        private static string getTableNameFromSQLServerConnectionString(string connectionString)
-        {
-            const string DatabasePropertyName = "Database";
-            const string InitialCatalogPropertyName = "Initial Catalog";
-
-            var connectionStringParts = connectionString.Split(';').Select(p => p.Trim());
-
-            if (connectionString.IndexOf(DatabasePropertyName) != -1)
-            {
-                var databasePart = connectionStringParts.First(part => part.IndexOf(DatabasePropertyName) == 0);
-                return databasePart.Split('=').Last().Trim();
-            }
-            else if (connectionString.IndexOf(InitialCatalogPropertyName) != -1)
-            {
-                var databasePart = connectionStringParts.First(part => part.IndexOf(InitialCatalogPropertyName) == 0);
-                return databasePart.Split('=').Last().Trim();
-            }
-            throw new UnknownSQLProviderException(connectionString);
         }
 
         private bool isSqlServerConnectionString(string connectionString)
@@ -85,10 +60,38 @@ namespace SLORM.Application.Contexts
             return (hasInitialCatalogProperty || hasDatabaseProperty) && !hasUidProperty;
         }
 
-        public void Select(params string[] columns)
+        public SLORMContext GroupBy(params string[] columns)
         {
             foreach (var currentColumn in columns)
-                columnsToSelect.Add(currentColumn);
+            {
+                var column = columnsInTable.FirstOrDefault(c => c.Name.ToLower() == currentColumn.ToLower());
+                if (column == null)
+                    continue;
+
+                var columnAlreadyIntList = columnsToGroupBy.Any(c => c.Name == column.Name);
+                if (columnAlreadyIntList)
+                    continue;
+
+                columnsToGroupBy.Add(column);
+            }
+            return this;
+        }
+
+        public SLORMContext Count(params string[] columns)
+        {
+            foreach (var currentColumn in columns)
+            {
+                var column = columnsInTable.FirstOrDefault(c => c.Name.ToLower() == currentColumn.ToLower());
+                if (column == null)
+                    continue;
+
+                var columnAlreadyIntList = columnsToCount.Any(c => c.Name == column.Name);
+                if (columnAlreadyIntList)
+                    continue;
+
+                columnsToCount.Add(column);
+            }
+            return this;
         }
     }
 }
