@@ -1,5 +1,6 @@
 using Microsoft.Data.Sqlite;
 using SLORM.Application.Contexts;
+using SLORM.Application.Enums;
 using System;
 using System.Data.SqlClient;
 using Xunit;
@@ -8,10 +9,14 @@ namespace SLORM.Application.IntegrationTests
 {
     public class UnitTest1
     {
+        public UnitTest1()
+        {
+            Lifecycle.Initialize();
+        }
+
         [Fact]
         public void GetTableDataFromRealSQLServer()
         {
-            Lifecycle.Initialize();
             var conn = new SqlConnection(@"Server=(local)\SQLEXPRESS;Database=Logs;Trusted_Connection=True;");
             var ctx = new SLORMContext(conn, "Logs");
             //ctx.Select("minhaColunaQUalquer", "Id", "aaaa", "", "DataHora");
@@ -48,6 +53,20 @@ namespace SLORM.Application.IntegrationTests
             //}
 
             //conn.Close();
+        }
+
+        [Fact]
+        public void methodbeingtested_situationbeingtested_exceptedresult()
+        {
+            var conn = new SqlConnection(@"Server=(local)\SQLEXPRESS;Database=Logs;Trusted_Connection=True;");
+            var ctx = new SLORMContext(conn, "Logs");
+            ctx.GroupBy("EmissorId", "TipoLog", "colunaQUalquer");
+            ctx.Filter("EmissorId", "1", FilterRigor.Equals, FilterMethod.Including);
+            ctx.Filter("Mensagem", "Top", FilterRigor.Contains, FilterMethod.Including);
+            ctx.Filter("EmissorId", "1", FilterRigor.Equals, FilterMethod.Including);
+            ctx.Count("DataHora", "aaaa", "Id");
+            ctx.OrderBy("CorrelationId", OrderType.ASC);
+            ctx.Query();
         }
     }
 }

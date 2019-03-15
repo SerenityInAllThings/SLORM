@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Threading.Tasks;
+using SLORM.Application.Contexts;
 using SLORM.Application.QueryBuilders;
 using SLORM.Application.ValueObjects;
 
@@ -49,6 +50,13 @@ namespace SLORM.Application.QueryExecutors
             }
 
             return columnList;
+        }
+
+        public async Task<QueryResult> Query(SLORMContext context)
+        {
+            var queryCommand = queryBuilder.GetReadQuery(context);
+
+            return new QueryResult();
         }
     }
 }

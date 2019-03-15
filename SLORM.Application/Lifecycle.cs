@@ -1,5 +1,7 @@
 ﻿using LightInject;
 using SLORM.Application.QueryBuilders;
+using SLORM.Application.QueryBuilders.QueryBuilders;
+using SLORM.Application.QueryBuilders.SQLServer.StatementBuilders;
 using SLORM.Application.QueryExecutors;
 using SLORM.Application.ValueObjects;
 using System.Runtime.CompilerServices;
@@ -35,6 +37,11 @@ namespace SLORM.Application
             // Registering SQL Server services
             Container.Register<IQueryBuilder, SQLServerQueryBuilder>(SQLServerKey);
             Container.Register<IQueryExecutor, SQLServerQueryExecutor>(SQLServerKey);
+            Container.Register<ISQLServerSelectStatementBuilder, SelectStatementBuilder>();
+            Container.Register<ISQLServerFromStatementBuilder, FromStatementBuilder>();
+            Container.Register<ISQLServerWhereStatementBuilder, WhereStatementBuilder>();
+            Container.Register<ISQLServerGroupByStatementBuilder, GroupByStatementBuilder>();
+            Container.Register<ISQLServerOrderByStatementBuilder, OrderByStatementBuilder>();
 
             Container.Register<ISQLServerDataTypeDeterminator, SQLServerDataTypeDeterminator>();
         }

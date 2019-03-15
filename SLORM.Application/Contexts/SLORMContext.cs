@@ -1,8 +1,10 @@
 using SLORM.Application.Enums;
 using SLORM.Application.Exceptions;
+using SLORM.Application.Extensions;
 using SLORM.Application.QueryBuilders;
 using SLORM.Application.QueryExecutors;
 using SLORM.Application.ValueObjects;
+using SLORM.Application.ValueObjects.SpecialCases;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -14,29 +16,30 @@ namespace SLORM.Application.Contexts
     public class SLORMContext
     {
         public string TableName { get; private set; }
+        internal SQLProvider Provider { get; private set; }
+        internal ICollection<TableColumn> ColumnsInTable { get; private set; }
         private DbConnection connection { get; set; }
-        private SQLProvider provider { get; set; }
         private IQueryExecutor queryExecutor { get; set; }
-        private ICollection<TableColumn> columnsInTable { get; set; }
-        private ICollection<TableColumn> columnsToGroupBy { get; set; }
-        private ICollection<TableColumn> columnsToCount { get; set; }
-        private ICollection<TableColumn> columnsToFilter { get; set; }
-        private ICollection<TableColumn> columnsToOrderBy { get; set; }
+
+        internal ICollection<TableColumn> ColumnsToGroupBy { get; private set; }
+        internal ICollection<TableColumn> ColumnsToCount { get; private set; }
+        internal ICollection<ColumnFilter> ColumnsToFilter { get; private set; }
+        internal ICollection<ColumnOrdering> ColumnsToOrderBy { get; private set; }
 
         public SLORMContext(DbConnection connection, string tableName)
         {
             this.connection = connection ?? throw new ArgumentNullException(nameof(connection));
-            this.provider = getSQLProviderFromConnectionString();
+            this.Provider = getSQLProviderFromConnectionString();
             this.TableName = !string.IsNullOrWhiteSpace(tableName) ? tableName : throw new ArgumentNullException(nameof(tableName));
-            this.columnsToGroupBy = new List<TableColumn>();
-            this.columnsToCount = new List<TableColumn>();
-            this.columnsToFilter = new List<TableColumn>();
-            this.columnsToOrderBy = new List<TableColumn>();
+            this.ColumnsToGroupBy = new List<TableColumn>();
+            this.ColumnsToCount = new List<TableColumn>();
+            this.ColumnsToFilter = new List<ColumnFilter>();
+            this.ColumnsToOrderBy = new List<ColumnOrdering>();
 
             var queryExecutorResolver = (IQueryExecutorResolver)Lifecycle.Container.GetInstance(typeof(IQueryExecutorResolver));
-            this.queryExecutor = queryExecutorResolver.GetQueryExecutorFromProviderType(this.provider);
+            this.queryExecutor = queryExecutorResolver.GetQueryExecutorFromProviderType(this.Provider);
 
-            this.columnsInTable = queryExecutor.GetTableColumns(connection, tableName).Result;
+            this.ColumnsInTable = queryExecutor.GetTableColumns(connection, tableName).Result;
         }
 
         private SQLProvider getSQLProviderFromConnectionString()
@@ -60,38 +63,95 @@ namespace SLORM.Application.Contexts
             return (hasInitialCatalogProperty || hasDatabaseProperty) && !hasUidProperty;
         }
 
-        public SLORMContext GroupBy(params string[] columns)
+        public SLORMContext GroupBy(params string[] columnNames)
         {
-            foreach (var currentColumn in columns)
+            foreach (var currentColumnName in columnNames)
             {
-                var column = columnsInTable.FirstOrDefault(c => c.Name.ToLower() == currentColumn.ToLower());
+                var column = ColumnsInTable.GetFromName(currentColumnName);
                 if (column == null)
                     continue;
 
-                var columnAlreadyIntList = columnsToGroupBy.Any(c => c.Name == column.Name);
+                var columnAlreadyIntList = ColumnsToGroupBy.GetFromName(column.Name) != null;
                 if (columnAlreadyIntList)
                     continue;
 
-                columnsToGroupBy.Add(column);
+                ColumnsToGroupBy.Add(column);
             }
             return this;
         }
 
-        public SLORMContext Count(params string[] columns)
+        public SLORMContext Count(params string[] columnNames)
         {
-            foreach (var currentColumn in columns)
+            foreach (var currentColumnName in columnNames)
             {
-                var column = columnsInTable.FirstOrDefault(c => c.Name.ToLower() == currentColumn.ToLower());
+                var column = ColumnsInTable.GetFromName(currentColumnName);
                 if (column == null)
                     continue;
 
-                var columnAlreadyIntList = columnsToCount.Any(c => c.Name == column.Name);
+                var columnAlreadyIntList = ColumnsToGroupBy.GetFromName(column.Name) != null;
                 if (columnAlreadyIntList)
                     continue;
 
-                columnsToCount.Add(column);
+                ColumnsToCount.Add(column);
             }
             return this;
+        }
+
+        public SLORMContext Filter(ColumnFilterRequest filterRequest)
+        {
+            if (filterRequest == null)
+                throw new ArgumentNullException(nameof(filterRequest));
+
+            var column = ColumnsInTable.GetFromName(filterRequest.ColumnName);
+            if (column == null)
+                return this;
+
+            var columnToFilter = new ColumnFilter(column, filterRequest);
+            ColumnsToFilter.Add(columnToFilter);
+
+            return this;
+        }
+
+        public SLORMContext Filter(string columnName, string value, FilterRigor rigor, FilterMethod method)
+        {
+            var filterRequest = new ColumnFilterRequest(columnName, value, rigor, method);
+            return Filter(filterRequest);
+        }
+
+        public SLORMContext OrderBy(ColumnOrderingRequest orderingRequest)
+        {
+            var column = ColumnsInTable.GetFromName(orderingRequest.ColumnName);
+            if (column == null)
+                return this;
+
+            GroupBy(column.Name);
+
+            var columnOrdering = new ColumnOrdering(column, orderingRequest);
+            ColumnsToOrderBy.Add(columnOrdering);
+
+            return this;
+        }
+
+        public SLORMContext OrderBy(string columnName, OrderType orderType)
+        {
+            var orderingRequest = new ColumnOrderingRequest(columnName, orderType);
+            return OrderBy(orderingRequest);
+        }
+
+        public void Query()
+        {
+            //if (!IsQueryable())
+            //    return new InvalidQueryResult();
+            queryExecutor.Query(this).Wait();
+        }
+
+        public bool IsQueryable()
+        {
+            if (!ColumnsInTable.Any())
+                return false;
+            if (!ColumnsToGroupBy.Any() && !ColumnsToCount.Any())
+                return false;
+            return true;
         }
     }
 }

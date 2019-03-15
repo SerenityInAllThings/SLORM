@@ -1,4 +1,5 @@
-﻿using SLORM.Application.ValueObjects;
+﻿using SLORM.Application.Contexts;
+using SLORM.Application.ValueObjects;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
@@ -9,5 +10,6 @@ namespace SLORM.Application.QueryExecutors
     internal interface IQueryExecutor
     {
         Task<ICollection<TableColumn>> GetTableColumns(DbConnection connection, string tableName);
+        Task<QueryResult> Query(SLORMContext context);
     }
 }
