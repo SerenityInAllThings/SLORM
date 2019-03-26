@@ -5,6 +5,6 @@ namespace SLORM.Application.QueryBuilders.SQLServer.StatementBuilders
 {
     internal interface ISQLServerGroupByStatementBuilder
     {
-        string GetStatement(ICollection<TableColumn> tableColumns, ICollection<TableColumn> groupByColumns);
+        Statement GetStatement(ICollection<TableColumn> tableColumns, ICollection<TableColumn> groupByColumns);
     }
 }

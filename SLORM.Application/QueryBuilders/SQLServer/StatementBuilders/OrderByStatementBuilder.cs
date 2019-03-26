@@ -2,7 +2,7 @@
 using SLORM.Application.ValueObjects;
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 
 namespace SLORM.Application.QueryBuilders.SQLServer.StatementBuilders
 {
@@ -10,28 +10,42 @@ namespace SLORM.Application.QueryBuilders.SQLServer.StatementBuilders
     {
         private static readonly string columnConnector = ", ";
 
-        public string GetStatement(ICollection<TableColumn> columnsInTable, ICollection<ColumnOrdering> columnsToOrderings)
+        public Statement GetStatement(ICollection<TableColumn> columnsInTable, ICollection<ColumnOrdering> columnsToOrderBy)
         {
-            var query = string.Empty;
-            foreach (var currentOrdering in columnsToOrderings)
+            if (columnsInTable == null)
+                throw new ArgumentNullException(nameof(columnsInTable));
+
+            if (columnsToOrderBy == null)
+                throw new ArgumentNullException(nameof(columnsToOrderBy));
+
+            if (columnsToOrderBy.Count() == 0)
+                return new Statement(string.Empty, new List<DBParameterKeyValue>());
+
+            var statementText = string.Empty;
+            foreach (var currentOrdering in columnsToOrderBy)
             {
                 if (!columnsInTable.Contains(currentOrdering.Column))
                     continue;
 
-                if (query.Length == 0)
-                    query += "ORDER BY ";
+                if (statementText.Length == 0)
+                    statementText += "ORDER BY ";
 
-                query += currentOrdering.Column.Name;
+                statementText += currentOrdering.Column.Name;
                 if (currentOrdering.OrderType == OrderType.ASC)
-                    query += " ASC";
+                    statementText += " ASC";
                 if (currentOrdering.OrderType == OrderType.DESC)
-                    query += " DESC";
+                    statementText += " DESC";
 
-                query += columnConnector;
+                statementText += columnConnector;
             }
-            query = query.Substring(0, query.Length - columnConnector.Length);
+            statementText = statementText.Substring(0, statementText.Length - columnConnector.Length);
 
-            return query;
+            return new Statement(statementText, new List<DBParameterKeyValue>());
+        }
+
+        private string GetParameterName(string baseName)
+        {
+            return $"@{baseName}_{Guid.NewGuid().ToString("N").Substring(0, 16)}";
         }
     }
 }

@@ -5,6 +5,6 @@ namespace SLORM.Application.QueryBuilders.SQLServer.StatementBuilders
 {
     internal interface ISQLServerWhereStatementBuilder
     {
-        string GetStatement(ICollection<TableColumn> tableColumns, ICollection<ColumnFilter> filterings);
+        Statement GetStatement(ICollection<TableColumn> tableColumns, ICollection<ColumnFilter> filterings);
     }
 }

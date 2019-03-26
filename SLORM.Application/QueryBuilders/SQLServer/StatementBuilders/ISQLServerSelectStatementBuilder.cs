@@ -5,6 +5,6 @@ namespace SLORM.Application.QueryBuilders.SQLServer.StatementBuilders
 {
     internal interface ISQLServerSelectStatementBuilder
     {
-        string GetStatement(ICollection<TableColumn> columnsInTable, ICollection<TableColumn> columnsToGroupBy, ICollection<TableColumn> columnsToCount);
+        Statement GetStatement(ICollection<TableColumn> columnsInTable, ICollection<TableColumn> columnsToGroupBy, ICollection<TableColumn> columnsToCount, ICollection<TableColumn> columnsToSum);
     }
 }

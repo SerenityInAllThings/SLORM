@@ -11,7 +11,7 @@ namespace SLORM.Application.QueryBuilders.SQLServer.StatementBuilders
     {
         private static readonly string filterConnector = "\nAND ";
 
-        public string GetStatement(ICollection<TableColumn> tableColumns, ICollection<ColumnFilter> filterings)
+        public Statement GetStatement(ICollection<TableColumn> tableColumns, ICollection<ColumnFilter> filterings)
         {
             if (tableColumns == null)
                 throw new ArgumentNullException(nameof(tableColumns));
@@ -19,107 +19,143 @@ namespace SLORM.Application.QueryBuilders.SQLServer.StatementBuilders
             if (filterings == null)
                 throw new ArgumentNullException(nameof(filterings));
 
-            var statement = "";
+            var statementParameters = new List<DBParameterKeyValue>();
+            var statementText = "";
+
+            if (filterings.Count == 0)
+                return new Statement(statementText, statementParameters);
+
             foreach (var currentFiltering in filterings)
             {
                 if (!tableColumns.Contains(currentFiltering.Column))
                     continue;
 
-                if (statement.Length == 0)
-                    statement += "WHERE ";
+                if (statementText.Length == 0)
+                    statementText += "WHERE ";
 
+                
                 switch(currentFiltering.Column.DataType)
                 {
                     case ColumnDataType.Date:
-                        statement += GetDateTimeFilterClause(currentFiltering);
+                        var filterDateClause = GetDateTimeFilterClause(currentFiltering);
+                        statementText += filterDateClause.StatementText;
+                        statementParameters.AddRange(filterDateClause.Parameters);
                         break;
                     case ColumnDataType.Number:
-                        statement += GetNumberFilterClause(currentFiltering);
+                        var filterNumberClause = GetNumberFilterClause(currentFiltering);
+                        statementText += filterNumberClause.StatementText;
+                        statementParameters.AddRange(filterNumberClause.Parameters);
                         break;
                     case ColumnDataType.String:
-                        statement += getStringFilterClause(currentFiltering);
+                        var filterStringClause = getStringFilterClause(currentFiltering);
+                        statementText += filterStringClause.StatementText;
+                        statementParameters.AddRange(filterStringClause.Parameters);
                         break;
                     default:
                         // Ignoring not supported data type filters
                         continue; 
                 }
 
-                statement += filterConnector;
+                statementText += filterConnector;
             }
             // Removing last connector;
-            statement = statement.Substring(0, statement.Length - filterConnector.Length);
+            statementText = statementText.Substring(0, statementText.Length - filterConnector.Length);
+            statementText = statementText.ToString().CleanWhitespacePolution();
 
-            return statement.ToString().CleanWhitespacePolution();
+            return new Statement(statementText, statementParameters);
         }
 
-        private string getStringFilterClause(ColumnFilter filter)
+        private Statement getStringFilterClause(ColumnFilter filter)
         {
-            var query = $"{filter.Column.Name} ";
+            var clauseParameters = new List<DBParameterKeyValue>();
+            var clauseText = $"{filter.Column.Name.SanitizeSQL()} ";
+
             if (filter.FilterRigor == FilterRigor.Contains)
             {
                 if (filter.FilterMethod == FilterMethod.Excluding)
-                    query += "NOT";
-                query += $"LIKE '%{filter.Value}%'";
-                
+                    clauseText += "NOT ";
+
+                var filterValueParameter = new DBParameterKeyValue(GetParameterName("StringFilterValue"), filter.Value);
+                clauseParameters.Add(filterValueParameter);
+                clauseText += $"LIKE '%' + {filterValueParameter.Key} + '%'";
             }
             else if (filter.FilterRigor == FilterRigor.Equals)
             {
                 if (filter.FilterMethod == FilterMethod.Excluding)
-                    query += "!";
-                query += $"= '{filter.Value}'";
+                    clauseText += "!";
+
+                var filterValueParameter = new DBParameterKeyValue(GetParameterName("StringFilterValue"), filter.Value);
+                clauseParameters.Add(filterValueParameter);
+                clauseText += $"= {filterValueParameter.Key}";
             }
 
-            return query;
+            return new Statement(clauseText, clauseParameters);
         }
 
-        private string GetNumberFilterClause(ColumnFilter filter)
+        private Statement GetNumberFilterClause(ColumnFilter filter)
         {
-            var query = string.Empty;
+            var clauseParameters = new List<DBParameterKeyValue>();
+            var clauseText = string.Empty;
+            var sanitizedColumnName = filter.Column.Name.SanitizeSQL();
             if (filter.FilterRigor == FilterRigor.Contains)
             {
-                query += $" CONVERT(varchar(64), {filter.Column.Name})";
+                clauseText += $" CONVERT(varchar(64), {sanitizedColumnName})";
 
                 if (filter.FilterMethod == FilterMethod.Excluding)
-                    query += " NOT";
+                    clauseText += " NOT";
 
-                query += $" LIKE '%{filter.Value}%'";
+                var filterValueParameter = new DBParameterKeyValue(GetParameterName("FilterNumberValue"), filter.Value);
+                clauseParameters.Add(filterValueParameter);
+                clauseText += $" LIKE '%' + {filterValueParameter.Key} + '%'";
             }
             else if (filter.FilterRigor == FilterRigor.Equals)
             {
-                query += $" {filter.Column.Name} ";
+                clauseText += $" {sanitizedColumnName} ";
 
                 if (filter.FilterMethod == FilterMethod.Excluding)
-                    query += "!";
+                    clauseText += "!";
 
-                query += $"= {filter.Value}";
+                var filterValueParameter = new DBParameterKeyValue(GetParameterName("FilterNumberValue"), filter.Value);
+                clauseParameters.Add(filterValueParameter);
+                clauseText += $"= {filterValueParameter.Key}";
             }
 
-            return query;
+            return new Statement(clauseText, clauseParameters);
         }
 
-        private string GetDateTimeFilterClause(ColumnFilter filter)
+        private Statement GetDateTimeFilterClause(ColumnFilter filter)
         {
-            var query = string.Empty;
+            var clauseParameters = new List<DBParameterKeyValue>();
+            var clauseText = string.Empty;
             if (filter.FilterRigor == FilterRigor.Contains)
             {
-                query += $" CONVERT(varchar(25), {filter.Column.Name}, 126)";
+                clauseText += $" CONVERT(varchar(25), {filter.Column.Name.SanitizeSQL()}, 126)";
 
                 if (filter.FilterMethod == FilterMethod.Excluding)
-                    query += " NOT";
+                    clauseText += " NOT";
 
-                query += $" LIKE '%{filter.Value}%'";
+                var filterValueParameter = new DBParameterKeyValue(GetParameterName("DateTimeFilterValue"), filter.Value);
+                clauseParameters.Add(filterValueParameter);
+                clauseText += $" LIKE '%' + {filterValueParameter.Key} + '%'";
             }
             else if (filter.FilterRigor == FilterRigor.Equals)
             {
-                query += $" {filter.Column.Name} ";
+                clauseText += $" {filter.Column.Name.SanitizeSQL()} ";
 
                 if (filter.FilterMethod == FilterMethod.Excluding)
-                    query += "!";
+                    clauseText += "!";
 
-                query += $"= '{filter.Value}'";
+                var filterValueParameter = new DBParameterKeyValue(GetParameterName("DateTimeFilterValue"), filter.Value);
+                clauseParameters.Add(filterValueParameter);
+                clauseText += $"= {filterValueParameter.Key}";
             }
 
-            return query;
+            return new Statement(clauseText, clauseParameters);
+        }
+
+        private string GetParameterName(string baseName)
+        {
+            return $"@{baseName}_{Guid.NewGuid().ToString("N").Substring(0, 16)}";
         }
     }
 }

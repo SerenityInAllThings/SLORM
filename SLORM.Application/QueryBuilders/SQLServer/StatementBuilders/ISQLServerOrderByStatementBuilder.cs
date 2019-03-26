@@ -5,6 +5,6 @@ namespace SLORM.Application.QueryBuilders.SQLServer.StatementBuilders
 {
     internal interface ISQLServerOrderByStatementBuilder
     {
-        string GetStatement(ICollection<TableColumn> columnsInTable, ICollection<ColumnOrdering> columnsToOrderings);
+        Statement GetStatement(ICollection<TableColumn> columnsInTable, ICollection<ColumnOrdering> columnsToOrderings);
     }
 }

@@ -7,6 +7,6 @@ namespace SLORM.Application.QueryBuilders
     internal interface IQueryBuilder
     {
         DbCommand GetTableDescriptionQuery(string tableName);
-        string GetReadQuery(SLORMContext context);
+        DbCommand GetReadQuery(SLORMContext context);
     }
 }

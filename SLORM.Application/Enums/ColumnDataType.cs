@@ -4,7 +4,7 @@ using System.Text;
 
 namespace SLORM.Application.Enums
 {
-    internal enum ColumnDataType
+    public enum ColumnDataType
     {
         Default,
         String,

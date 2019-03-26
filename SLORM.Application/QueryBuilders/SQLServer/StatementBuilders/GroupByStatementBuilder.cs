@@ -9,24 +9,29 @@ namespace SLORM.Application.QueryBuilders.SQLServer.StatementBuilders
     {
         private static readonly string columnSeparator = ", ";
 
-        public string GetStatement(ICollection<TableColumn> tableColumns, ICollection<TableColumn> groupByColumns)
+        public Statement GetStatement(ICollection<TableColumn> tableColumns, ICollection<TableColumn> groupByColumns)
         {
-            var statement = string.Empty;
+            var statementText = string.Empty;
             foreach (var currentGroupByColumn in groupByColumns)
             {
                 if (!tableColumns.Contains(currentGroupByColumn))
                     continue;
 
-                if (statement.Length == 0)
-                    statement += "GROUP BY ";
+                if (statementText.Length == 0)
+                    statementText += "GROUP BY ";
 
-                statement += currentGroupByColumn.Name;
-                statement += columnSeparator;
+                statementText += currentGroupByColumn.Name;
+                statementText += columnSeparator;
             }
             // Removing last extra separator
-            statement = statement.Substring(0, statement.Length - columnSeparator.Length);
+            statementText = statementText.Substring(0, statementText.Length - columnSeparator.Length);
 
-            return statement;
+            return new Statement(statementText, new List<DBParameterKeyValue>());
+        }
+
+        private string GetParameterName(string baseName)
+        {
+            return $"@{baseName}_{Guid.NewGuid().ToString("N").Substring(0, 16)}";
         }
     }
 }

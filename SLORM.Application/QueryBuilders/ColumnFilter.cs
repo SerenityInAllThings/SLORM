@@ -13,7 +13,7 @@ namespace SLORM.Application.QueryBuilders
 
         internal ColumnFilter(TableColumn column, string value, FilterRigor filterRigor, FilterMethod filterMethod)
         {
-            this.Column = column ?? throw new ArgumentNullException(nameof(column));
+            this.Column = column;
             this.Value = !string.IsNullOrWhiteSpace(value) ? value : throw new ArgumentNullException(nameof(value));
             this.FilterRigor = filterRigor;
             this.FilterMethod = filterMethod;
@@ -24,7 +24,7 @@ namespace SLORM.Application.QueryBuilders
             if (column.Name.Trim() != filterRequest.ColumnName.Trim())
                 throw new ArgumentException($"{nameof(column.Name)} is different from {nameof(filterRequest.ColumnName)}");
 
-            this.Column = column ?? throw new ArgumentNullException(nameof(column));
+            this.Column = column;
             this.Value = !string.IsNullOrWhiteSpace(filterRequest.Value) ? filterRequest.Value : throw new ArgumentNullException(nameof(filterRequest.Value));
             this.FilterRigor = filterRequest.FilterRigor;
             this.FilterMethod = filterRequest.FilterMethod;

@@ -7,9 +7,9 @@ using Xunit;
 
 namespace SLORM.Application.IntegrationTests
 {
-    public class UnitTest1
+    public class SQLServerIntegrationTests
     {
-        public UnitTest1()
+        public SQLServerIntegrationTests()
         {
             Lifecycle.Initialize();
         }

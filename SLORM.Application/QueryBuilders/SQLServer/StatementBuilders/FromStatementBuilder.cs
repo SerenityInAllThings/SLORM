@@ -1,4 +1,6 @@
-﻿using System;
+﻿using SLORM.Application.Extensions;
+using SLORM.Application.ValueObjects;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -8,12 +10,14 @@ namespace SLORM.Application.QueryBuilders.SQLServer.StatementBuilders
     {
         public FromStatementBuilder() { }
 
-        public string GetStatement(string tableName)
+        public Statement GetStatement(string tableName)
         {
             if (string.IsNullOrWhiteSpace(tableName))
                 throw new ArgumentNullException(nameof(tableName));
 
-            return $"FROM {tableName}";
+            var statementText = $"FROM {tableName.SanitizeSQL()}";
+
+            return new Statement(statementText, new List<DBParameterKeyValue>());
         }
     }
 }

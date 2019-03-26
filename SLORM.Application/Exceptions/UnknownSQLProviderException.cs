@@ -8,11 +8,11 @@ namespace SLORM.Application.Exceptions
     {
         private static readonly string errorMessageTemplate = "The provided connection string has an unknown or unsupported SQL Provider: \n{0}";
 
-        public UnknownSQLProviderException(string connectionString) 
+        internal UnknownSQLProviderException(string connectionString) 
             : base(string.Format(errorMessageTemplate, connectionString))
         { }
 
-        public UnknownSQLProviderException() : base("Unsupported SQL provider type")
+        internal UnknownSQLProviderException() : base("Unsupported SQL provider type")
         { }
     }
 }

@@ -9,7 +9,7 @@ namespace SLORM.Application.QueryExecutors
 {
     internal interface IQueryExecutor
     {
-        Task<ICollection<TableColumn>> GetTableColumns(DbConnection connection, string tableName);
+        Task<ICollection<TableColumn>> GetTableColumns(IDbConnection connection, string tableName);
         Task<QueryResult> Query(SLORMContext context);
     }
 }

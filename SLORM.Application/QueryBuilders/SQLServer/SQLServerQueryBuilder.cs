@@ -1,7 +1,9 @@
 ﻿using SLORM.Application.Contexts;
 using SLORM.Application.Extensions;
 using SLORM.Application.QueryBuilders.SQLServer.StatementBuilders;
+using SLORM.Application.ValueObjects;
 using System;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Data.SqlClient;
 
@@ -9,9 +11,8 @@ namespace SLORM.Application.QueryBuilders.QueryBuilders
 {
     internal class SQLServerQueryBuilder : IQueryBuilder
     {
-        private static readonly string generalQueryTemplate = "{0}\n{1}\n{2}\n{3}\n{4};";
         private static readonly string tableNameParameterName = "@TableName";
-        private static readonly string queryCommandTemplate =   $@"select * 
+        private static readonly string queryCommandTemplate = $@"select * 
                                                                 from information_schema.columns 
                                                                 where table_name = {tableNameParameterName}
                                                                 order by ordinal_position".CleanWhitespacePolution();
@@ -23,8 +24,8 @@ namespace SLORM.Application.QueryBuilders.QueryBuilders
         private readonly ISQLServerOrderByStatementBuilder orderByStatementBuilder;
 
         public SQLServerQueryBuilder(
-            ISQLServerSelectStatementBuilder selectStatementBuilder, 
-            ISQLServerFromStatementBuilder fromStatementBuilder, 
+            ISQLServerSelectStatementBuilder selectStatementBuilder,
+            ISQLServerFromStatementBuilder fromStatementBuilder,
             ISQLServerWhereStatementBuilder whereStatementBuilder,
             ISQLServerGroupByStatementBuilder groupByStatementBuilder,
             ISQLServerOrderByStatementBuilder orderByStatementBuilder)
@@ -41,6 +42,8 @@ namespace SLORM.Application.QueryBuilders.QueryBuilders
             if (string.IsNullOrWhiteSpace(tableName))
                 throw new ArgumentNullException(nameof(tableName));
 
+            tableName = tableName.SanitizeSQL();
+
             using (SqlCommand queryCommand = new SqlCommand(queryCommandTemplate))
             {
                 queryCommand.Parameters.AddWithValue(tableNameParameterName, tableName);
@@ -49,16 +52,26 @@ namespace SLORM.Application.QueryBuilders.QueryBuilders
             }
         }
 
-        public string GetReadQuery(SLORMContext ctx)
+        public DbCommand GetReadQuery(SLORMContext ctx)
         {
-            var selectStatement = selectStatementBuilder.GetStatement(ctx.ColumnsInTable, ctx.ColumnsToGroupBy, ctx.ColumnsToCount);
-            var fromStatement = fromStatementBuilder.GetStatement(ctx.TableName);
-            var whereStatement = whereStatementBuilder.GetStatement(ctx.ColumnsInTable, ctx.ColumnsToFilter);
-            var groupByStatement = groupByStatementBuilder.GetStatement(ctx.ColumnsInTable, ctx.ColumnsToGroupBy);
-            var orderByStatement = orderByStatementBuilder.GetStatement(ctx.ColumnsInTable, ctx.ColumnsToOrderBy);
+            var dbCommand = new SqlCommand();
+            var statementList = new List<Statement>();
+            statementList.Add(selectStatementBuilder.GetStatement(ctx.ColumnsInTable, ctx.ColumnsToGroupBy, ctx.ColumnsToCount, ctx.ColumnsToSum));
+            statementList.Add(fromStatementBuilder.GetStatement(ctx.TableName));
+            statementList.Add(whereStatementBuilder.GetStatement(ctx.ColumnsInTable, ctx.ColumnsToFilter));
+            statementList.Add(groupByStatementBuilder.GetStatement(ctx.ColumnsInTable, ctx.ColumnsToGroupBy));
+            statementList.Add(orderByStatementBuilder.GetStatement(ctx.ColumnsInTable, ctx.ColumnsToOrderBy));
 
-            var query = string.Format(generalQueryTemplate, selectStatement, fromStatement, whereStatement, groupByStatement, orderByStatement).CleanWhitespacePolution();
-            return query;
+            dbCommand.CommandText = string.Empty;
+            var statementParameters = new List<DBParameterKeyValue>();
+            foreach (var currentStatement in statementList)
+            {
+                dbCommand.CommandText += currentStatement.StatementText;
+                dbCommand.CommandText += " ";
+                foreach (var currentParameter in currentStatement.Parameters)
+                    dbCommand.Parameters.AddWithValue(currentParameter.Key, currentParameter.Value);
+            }
+            return dbCommand;
         }
     }
 }

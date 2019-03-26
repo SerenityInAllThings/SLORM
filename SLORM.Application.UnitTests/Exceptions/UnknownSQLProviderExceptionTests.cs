@@ -14,11 +14,28 @@ namespace SLORM.Application.UnitTests.Exceptions
         [InlineData("Server=myServerAddress;Database=myDataBase;User Id=myUsername;Password = myPassword;")]
         public void Constructor_WhenInstanciated_ShouldReturnInstance(string connectionString)
         {
-            // Arrange
             // Act
             var exception = new UnknownSQLProviderException(connectionString);
             // Assert
             Assert.NotNull(exception);
+        }
+
+        [Fact]
+        public void Constructor_WhenParameterLess_ShouldReturnInstance()
+        {
+            // Act
+            var exception = new UnknownSQLProviderException();
+            // Assert
+            Assert.NotNull(exception);
+        }
+
+        [Fact]
+        public void Constructor_WhenInstanciated_ShouldReturnExceptionDerivedClass()
+        {
+            // Act
+            var exception = new UnknownSQLProviderException();
+            // Assert
+            Assert.True(exception is Exception);
         }
     }
 }

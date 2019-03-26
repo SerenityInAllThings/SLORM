@@ -10,31 +10,29 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace SLORM.Application.Contexts
 {
     public class SLORMContext
     {
-        public string TableName { get; private set; }
-        internal SQLProvider Provider { get; private set; }
-        internal ICollection<TableColumn> ColumnsInTable { get; private set; }
-        private DbConnection connection { get; set; }
+        public string TableName { get; }
+        internal SQLProvider Provider { get; }
+        internal ICollection<TableColumn> ColumnsInTable { get; }
+        internal IDbConnection Connection { get; }
         private IQueryExecutor queryExecutor { get; set; }
 
-        internal ICollection<TableColumn> ColumnsToGroupBy { get; private set; }
-        internal ICollection<TableColumn> ColumnsToCount { get; private set; }
-        internal ICollection<ColumnFilter> ColumnsToFilter { get; private set; }
-        internal ICollection<ColumnOrdering> ColumnsToOrderBy { get; private set; }
+        internal ICollection<TableColumn> ColumnsToGroupBy { get; } = new List<TableColumn>();
+        internal ICollection<TableColumn> ColumnsToCount { get; } = new List<TableColumn>();
+        internal ICollection<TableColumn> ColumnsToSum { get; } = new List<TableColumn>();
+        internal ICollection<ColumnFilter> ColumnsToFilter { get; } = new List<ColumnFilter>();
+        internal ICollection<ColumnOrdering> ColumnsToOrderBy { get; } = new List<ColumnOrdering>();
 
-        public SLORMContext(DbConnection connection, string tableName)
+        public SLORMContext(IDbConnection connection, string tableName)
         {
-            this.connection = connection ?? throw new ArgumentNullException(nameof(connection));
+            this.Connection = connection ?? throw new ArgumentNullException(nameof(connection));
             this.Provider = getSQLProviderFromConnectionString();
             this.TableName = !string.IsNullOrWhiteSpace(tableName) ? tableName : throw new ArgumentNullException(nameof(tableName));
-            this.ColumnsToGroupBy = new List<TableColumn>();
-            this.ColumnsToCount = new List<TableColumn>();
-            this.ColumnsToFilter = new List<ColumnFilter>();
-            this.ColumnsToOrderBy = new List<ColumnOrdering>();
 
             var queryExecutorResolver = (IQueryExecutorResolver)Lifecycle.Container.GetInstance(typeof(IQueryExecutorResolver));
             this.queryExecutor = queryExecutorResolver.GetQueryExecutorFromProviderType(this.Provider);
@@ -44,10 +42,10 @@ namespace SLORM.Application.Contexts
 
         private SQLProvider getSQLProviderFromConnectionString()
         {
-            if (isSqlServerConnectionString(connection.ConnectionString))
+            if (isSqlServerConnectionString(Connection.ConnectionString))
                 return SQLProvider.SQLServer;
             else
-                throw new UnknownSQLProviderException(connection.ConnectionString);
+                throw new UnknownSQLProviderException(Connection.ConnectionString);
         }
 
         private bool isSqlServerConnectionString(string connectionString)
@@ -65,14 +63,17 @@ namespace SLORM.Application.Contexts
 
         public SLORMContext GroupBy(params string[] columnNames)
         {
+            if (columnNames == null)
+                throw new ArgumentNullException(nameof(columnNames));
+
             foreach (var currentColumnName in columnNames)
             {
                 var column = ColumnsInTable.GetFromName(currentColumnName);
                 if (column == null)
                     continue;
 
-                var columnAlreadyIntList = ColumnsToGroupBy.GetFromName(column.Name) != null;
-                if (columnAlreadyIntList)
+                var columnAlreadyInList = ColumnsToGroupBy.GetFromName(column.Name) != null;
+                if (columnAlreadyInList)
                     continue;
 
                 ColumnsToGroupBy.Add(column);
@@ -82,14 +83,17 @@ namespace SLORM.Application.Contexts
 
         public SLORMContext Count(params string[] columnNames)
         {
+            if (columnNames == null)
+                throw new ArgumentNullException(nameof(columnNames));
+
             foreach (var currentColumnName in columnNames)
             {
                 var column = ColumnsInTable.GetFromName(currentColumnName);
                 if (column == null)
                     continue;
 
-                var columnAlreadyIntList = ColumnsToGroupBy.GetFromName(column.Name) != null;
-                if (columnAlreadyIntList)
+                var columnAlreadyInList = ColumnsToCount.GetFromName(column.Name) != null;
+                if (columnAlreadyInList)
                     continue;
 
                 ColumnsToCount.Add(column);
@@ -105,6 +109,22 @@ namespace SLORM.Application.Contexts
             var column = ColumnsInTable.GetFromName(filterRequest.ColumnName);
             if (column == null)
                 return this;
+
+            // Filtering incorrect value formats
+            if (filterRequest.FilterRigor == FilterRigor.Equals)
+                switch (column.DataType)
+                {
+                    case ColumnDataType.Number:
+                        double parsedValue;
+                        if (!double.TryParse(filterRequest.Value, out parsedValue))
+                            return this;
+                        break;
+                    case ColumnDataType.Date:
+                        DateTime parsedDateValue;
+                        if (!DateTime.TryParse(filterRequest.Value, out parsedDateValue))
+                            return this;
+                        break;
+                }
 
             var columnToFilter = new ColumnFilter(column, filterRequest);
             ColumnsToFilter.Add(columnToFilter);
@@ -138,11 +158,27 @@ namespace SLORM.Application.Contexts
             return OrderBy(orderingRequest);
         }
 
-        public void Query()
+        public SLORMContext Sum(string columnName)
         {
-            //if (!IsQueryable())
-            //    return new InvalidQueryResult();
-            queryExecutor.Query(this).Wait();
+            var column = ColumnsInTable.GetFromName(columnName);
+            if (column == null || column.DataType != ColumnDataType.Number)
+                return this;
+
+            var columnAlreadyInList = ColumnsToSum.GetFromName(column.Name) != null;
+            if (columnAlreadyInList)
+                return this;
+
+            ColumnsToSum.Add(column);
+            return this;
+        }
+
+        public async Task<QueryResult> Query()
+        {
+            if (!IsQueryable())
+                return new InvalidQueryResult();
+
+            var result = await queryExecutor.Query(this);
+            return result;
         }
 
         public bool IsQueryable()

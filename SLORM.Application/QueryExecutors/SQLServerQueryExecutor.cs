@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Data.SqlClient;
 using System.Threading.Tasks;
 using SLORM.Application.Contexts;
+using SLORM.Application.Extensions;
 using SLORM.Application.QueryBuilders;
 using SLORM.Application.ValueObjects;
 
@@ -26,7 +28,7 @@ namespace SLORM.Application.QueryExecutors
             this.dataTypeDeterminator = dataTypeDeterminator ?? throw new ArgumentNullException(nameof(dataTypeDeterminator));
         }
 
-        public async Task<ICollection<TableColumn>> GetTableColumns(DbConnection connection, string tableName)
+        public async Task<ICollection<TableColumn>> GetTableColumns(IDbConnection connection, string tableName)
         {
             if (connection == null)
                 throw new ArgumentNullException(nameof(connection));
@@ -36,17 +38,18 @@ namespace SLORM.Application.QueryExecutors
             var columnList = new List<TableColumn>();
             using (var query = queryBuilder.GetTableDescriptionQuery(tableName))
             {
-                connection.Open();
-                query.Connection = connection;
+                await connection.EnsureConnected();
+                query.Connection = (SqlConnection)connection;
                 var reader = await query.ExecuteReaderAsync();
-                
-                while(reader.Read())
+
+                while (await reader.ReadAsync())
                 {
                     var columnName = reader[columnNameColumnName] as string;
                     var rawColumnType = reader[dataTypeColumnName] as string;
                     var parsedType = dataTypeDeterminator.FromDataTypeField(rawColumnType);
                     columnList.Add(new TableColumn(columnName, parsedType));
                 }
+                reader.Close();
             }
 
             return columnList;
@@ -54,9 +57,18 @@ namespace SLORM.Application.QueryExecutors
 
         public async Task<QueryResult> Query(SLORMContext context)
         {
-            var queryCommand = queryBuilder.GetReadQuery(context);
+            if (context == null)
+                throw new ArgumentNullException(nameof(context));
 
-            return new QueryResult();
+            using (var queryCommand = queryBuilder.GetReadQuery(context))
+            {
+                await context.Connection.EnsureConnected();
+                queryCommand.Connection = (SqlConnection)context.Connection;
+                var reader = await queryCommand.ExecuteReaderAsync();
+
+                var result = new QueryResult(reader);
+                return result;
+            }
         }
     }
 }
