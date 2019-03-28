@@ -5,12 +5,10 @@ using System.Text;
 
 namespace SLORM.Application.ValueObjects
 {
-    internal class TableColumn
+    public class TableColumn
     {
-        internal string Name { get; private set; }
+        public string Name { get; private set; }
         internal ColumnDataType DataType { get; private set; }
-
-        public int Idade { get; set; }
 
         internal TableColumn(string name, ColumnDataType dataType)
         {

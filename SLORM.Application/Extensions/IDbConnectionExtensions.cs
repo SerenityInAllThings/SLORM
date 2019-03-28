@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace SLORM.Application.Extensions
@@ -10,8 +7,9 @@ namespace SLORM.Application.Extensions
     internal static class IDbConnectionExtensions
     {
         private static readonly int maximumTimesToWait = 15;
+        private static readonly int triesIntervalMs = 1000;
 
-        public static async Task EnsureConnected(this IDbConnection connection, int tries = 0)
+        internal static async Task EnsureConnected(this IDbConnection connection, int tries = 0)
         {
             // TODO: Improve this exception
             if (tries > maximumTimesToWait)
@@ -21,7 +19,7 @@ namespace SLORM.Application.Extensions
                 return;
             if (connection.State == ConnectionState.Connecting || connection.State == ConnectionState.Executing || connection.State == ConnectionState.Fetching)
             {
-                await Task.Delay(1000);
+                await Task.Delay(triesIntervalMs);
                 await connection.EnsureConnected(++tries);
             }
             else

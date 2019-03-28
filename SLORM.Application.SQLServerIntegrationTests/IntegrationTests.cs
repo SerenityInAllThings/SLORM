@@ -5,6 +5,7 @@ using System.Data.SqlClient;
 using System.Threading.Tasks;
 using Xunit;
 using System.Linq;
+using SLORM.Application.Extensions;
 
 namespace SLORM.Application.SQLServerIntegrationTests
 {
@@ -596,6 +597,19 @@ namespace SLORM.Application.SQLServerIntegrationTests
                 var equivalentRow = expectedResult.ElementAt(i);
                 Assert.Equal(equivalentRow.Key.Name, currentRow.Values[0]);
             }
+        }
+
+        [Fact]
+        public async Task GetTableList_aa_aaaa()
+        {
+            // Arrange
+            var c = @"Server=(local)\SQLEXPRESS;Trusted_Connection=True;";
+            IDbConnection connection = new SqlConnection(c);
+            await connection.EnsureConnected();
+            var tables = SLORMContext.GetDatabasesInServer(connection);
+            // Act
+
+            // Assert
         }
     }
 }

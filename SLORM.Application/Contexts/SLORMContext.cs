@@ -17,8 +17,8 @@ namespace SLORM.Application.Contexts
     public class SLORMContext
     {
         public string TableName { get; }
+        public ICollection<TableColumn> ColumnsInTable { get; }
         internal SQLProvider Provider { get; }
-        internal ICollection<TableColumn> ColumnsInTable { get; }
         internal IDbConnection Connection { get; }
         private IQueryExecutor queryExecutor { get; set; }
 
@@ -188,6 +188,22 @@ namespace SLORM.Application.Contexts
             if (!ColumnsToGroupBy.Any() && !ColumnsToCount.Any())
                 return false;
             return true;
+        }
+
+        public async static Task<ICollection<string>> GetDatabasesInServer(IDbConnection connection)
+        {
+            // TODO: Improve this
+            var tableList = new List<string>();
+            
+            await connection.EnsureConnected();
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT name FROM master.sys.databases WHERE name NOT IN ('master', 'tempdb', 'model', 'msdb');";
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                    tableList.Add(reader[0].ToString());
+            }
+            return tableList;
         }
     }
 }

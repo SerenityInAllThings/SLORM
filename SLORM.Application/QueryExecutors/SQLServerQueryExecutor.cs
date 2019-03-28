@@ -40,16 +40,16 @@ namespace SLORM.Application.QueryExecutors
             {
                 await connection.EnsureConnected();
                 query.Connection = (SqlConnection)connection;
-                var reader = await query.ExecuteReaderAsync();
-
-                while (await reader.ReadAsync())
+                using (var reader = await query.ExecuteReaderAsync())
                 {
-                    var columnName = reader[columnNameColumnName] as string;
-                    var rawColumnType = reader[dataTypeColumnName] as string;
-                    var parsedType = dataTypeDeterminator.FromDataTypeField(rawColumnType);
-                    columnList.Add(new TableColumn(columnName, parsedType));
+                    while (await reader.ReadAsync())
+                    {
+                        var columnName = reader[columnNameColumnName] as string;
+                        var rawColumnType = reader[dataTypeColumnName] as string;
+                        var parsedType = dataTypeDeterminator.FromDataTypeField(rawColumnType);
+                        columnList.Add(new TableColumn(columnName, parsedType));
+                    }
                 }
-                reader.Close();
             }
 
             return columnList;

@@ -2,6 +2,15 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard1.6</TargetFramework>
+    <Version>0.0.1</Version>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <Authors>SerenityInAllThings</Authors>
+    <Company />
+    <Product>SLORM.</Product>
+    <PackageId>SLORM</PackageId>
+    <Description>SLORM stands for Schemaless ORM. It allows you to safetly query relational databases without first knowing the database schema. Great for dashboard applications where queries are configured freely by the end-user.</Description>
+    <Copyright>MIT</Copyright>
+    <PackageTags>ORM, Schemaless, query</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>

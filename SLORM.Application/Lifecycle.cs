@@ -7,6 +7,7 @@ using SLORM.Application.ValueObjects;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("SLORM.Application.UnitTests")]
+[assembly: InternalsVisibleTo("SLORM.Application.SQLServerIntegrationTests")]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 namespace SLORM.Application
 {
