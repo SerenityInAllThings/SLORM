@@ -8,7 +8,7 @@ namespace SLORM.Application.ValueObjects
     public class TableColumn
     {
         public string Name { get; private set; }
-        internal ColumnDataType DataType { get; private set; }
+        public ColumnDataType DataType { get; private set; }
 
         internal TableColumn(string name, ColumnDataType dataType)
         {
