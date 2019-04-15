@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard1.6</TargetFramework>
-    <Version>0.0.1</Version>
+    <Version>0.0.3</Version>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <Authors>SerenityInAllThings</Authors>
     <Company />

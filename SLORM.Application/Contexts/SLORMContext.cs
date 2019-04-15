@@ -194,7 +194,7 @@ namespace SLORM.Application.Contexts
         {
             // TODO: Improve this
             var tableList = new List<string>();
-            
+
             await connection.EnsureConnected();
             var command = connection.CreateCommand();
             command.CommandText = "SELECT name FROM master.sys.databases WHERE name NOT IN ('master', 'tempdb', 'model', 'msdb');";
