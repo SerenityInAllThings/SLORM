@@ -10,6 +10,6 @@ namespace SLORM.Application.QueryExecutors
     internal interface IQueryExecutor
     {
         Task<ICollection<TableColumn>> GetTableColumns(IDbConnection connection, string tableName);
-        Task<QueryResult> Query(SLORMContext context);
+        Task<QueryResult> Query(SLORMContext context, int timeoutInSeconds);
     }
 }

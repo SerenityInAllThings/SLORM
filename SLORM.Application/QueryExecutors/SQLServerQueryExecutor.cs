@@ -55,15 +55,19 @@ namespace SLORM.Application.QueryExecutors
             return columnList;
         }
 
-        public async Task<QueryResult> Query(SLORMContext context)
+        public async Task<QueryResult> Query(SLORMContext context, int timeoutInSeconds)
         {
             if (context == null)
                 throw new ArgumentNullException(nameof(context));
+
+            if (timeoutInSeconds <= 0)
+                throw new ArgumentOutOfRangeException(nameof(timeoutInSeconds));
 
             using (var queryCommand = queryBuilder.GetReadQuery(context))
             {
                 await context.Connection.EnsureConnected();
                 queryCommand.Connection = (SqlConnection)context.Connection;
+                queryCommand.CommandTimeout = timeoutInSeconds;
                 var reader = await queryCommand.ExecuteReaderAsync();
 
                 var result = new QueryResult(reader);

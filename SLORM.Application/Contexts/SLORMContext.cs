@@ -172,12 +172,15 @@ namespace SLORM.Application.Contexts
             return this;
         }
 
-        public async Task<QueryResult> Query()
+        public async Task<QueryResult> Query(int timeoutInSeconds = 30)
         {
             if (!IsQueryable())
                 return new InvalidQueryResult();
 
-            var result = await queryExecutor.Query(this);
+            if (timeoutInSeconds <= 0)
+                throw new ArgumentOutOfRangeException(nameof(timeoutInSeconds));
+
+            var result = await queryExecutor.Query(this, timeoutInSeconds);
             return result;
         }
 
