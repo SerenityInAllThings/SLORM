@@ -199,14 +199,38 @@ namespace SLORM.Application.Contexts
             var tableList = new List<string>();
 
             await connection.EnsureConnected();
-            var command = connection.CreateCommand();
-            command.CommandText = "SELECT name FROM master.sys.databases WHERE name NOT IN ('master', 'tempdb', 'model', 'msdb');";
-            using (var reader = command.ExecuteReader())
+            using (var command = connection.CreateCommand())
             {
-                while (reader.Read())
-                    tableList.Add(reader[0].ToString());
+                command.CommandText = "SELECT name FROM master.sys.databases WHERE name NOT IN ('master', 'tempdb', 'model', 'msdb');";
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                        tableList.Add(reader[0].ToString());
+                }
             }
             return tableList;
+        }
+
+        public async Task<ICollection<string>> GetColumnUniqueValues(string columnName)
+        {
+            if (string.IsNullOrWhiteSpace(columnName))
+                throw new ArgumentNullException(columnName);
+
+            var uniqueValues = new List<string>();
+            if (!ColumnsInTable.Any(c => c.Name == columnName))
+                return uniqueValues;
+
+            await Connection.EnsureConnected();
+            using (var command = Connection.CreateCommand())
+            {
+                command.CommandText = $"SELECT DISTINCT({columnName}) FROM {TableName}";
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                        uniqueValues.Add(reader[0].ToString());
+                }
+            }
+            return uniqueValues;
         }
     }
 }
