@@ -235,13 +235,13 @@ namespace SLORM.Application.Contexts
 			return uniqueValues;
 		}
 
-		public async Task<ICollection<string>> GetTableNamesInDb()
+		public static async Task<ICollection<string>> GetTableNamesInDb(IDbConnection connection)
 		{
 			// This method should be in the query builder.
 
 			var tableNames = new List<string>();
-			await Connection.EnsureConnected();
-			using (var command = Connection.CreateCommand())
+			await connection.EnsureConnected();
+			using (var command = connection.CreateCommand())
 			{
 				command.CommandText = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES";
 				using (var reader = command.ExecuteReader())
