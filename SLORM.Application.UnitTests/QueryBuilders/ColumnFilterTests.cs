@@ -15,14 +15,13 @@ namespace SLORM.Application.UnitTests.QueryBuilders
         {
             // Arrange
             var column = new TableColumn("columnName", Enums.ColumnDataType.Date);
-            var valueToFilter = "aa";
+            var valueToFilter = new List<string>() { "aa" };
             var filterRigor = FilterRigor.Contains;
             var filterMethod = FilterMethod.Excluding;
             // Act
             var columnFilter = new ColumnFilter(column, valueToFilter, filterRigor, filterMethod); ;
             // Assert
             Assert.Equal(column, columnFilter.Column);
-            Assert.Equal(valueToFilter, columnFilter.Value);
             Assert.Equal(filterRigor, columnFilter.FilterRigor);
             Assert.Equal(filterMethod, columnFilter.FilterMethod);
         }

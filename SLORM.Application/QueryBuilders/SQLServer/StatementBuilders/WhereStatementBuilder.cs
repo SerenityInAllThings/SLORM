@@ -75,7 +75,7 @@ namespace SLORM.Application.QueryBuilders.SQLServer.StatementBuilders
             {
                 var currentValue = filter.Values.ElementAt(i);
                 if (i != 0)
-                    clauseText += " OR ";
+                    clauseText += $" OR {filter.Column.Name.SanitizeSQL()} ";
 
                 if (filter.FilterRigor == FilterRigor.Contains)
                 {

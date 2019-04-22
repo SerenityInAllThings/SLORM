@@ -285,6 +285,7 @@ namespace SLORM.Application.UnitTests.Contexts
         public void Filter_WhenValidFilter_ShouldAddFilterToFilterList(string columnName, string value, FilterRigor rigor, FilterMethod method)
         {
             // Arrange
+            var values = new List<string> { value, value };
             var connectionString = "Data Source=190.190.200.100,1433;Initial Catalog = myDataBase;User ID = myUsername;Password = myPassword;";
             var columnsInTable = new string[] { "column1", "column2", "column3" };
             var queryExecutorResolverMock = GetQueryExecutorResolverMockWithColumns(columnsInTable);
@@ -294,13 +295,12 @@ namespace SLORM.Application.UnitTests.Contexts
             dbConnectionMock.Setup(conn => conn.ConnectionString).Returns(connectionString);
             var ctx = new SLORMContext(dbConnectionMock.Object, connectionString);
 
-            var columnFilter = new ColumnFilterRequest(columnName, value, rigor, method);
+            var columnFilter = new ColumnFilterRequest(columnName, values, rigor, method);
             // Act
             ctx.Filter(columnFilter);
             // Assert
-            var filterRequest = ctx.ColumnsToFilter.First(c => c.Column.Name == columnFilter.ColumnName && c.FilterMethod == columnFilter.FilterMethod && c.FilterRigor == columnFilter.FilterRigor && c.Value == columnFilter.Value);
+            var filterRequest = ctx.ColumnsToFilter.First(c => c.Column.Name == columnFilter.ColumnName && c.FilterMethod == columnFilter.FilterMethod && c.FilterRigor == columnFilter.FilterRigor);
             Assert.Equal(columnFilter.ColumnName, filterRequest.Column.Name);
-            Assert.Equal(columnFilter.Value, filterRequest.Value);
             Assert.Equal(columnFilter.FilterMethod, filterRequest.FilterMethod);
             Assert.Equal(columnFilter.FilterRigor, filterRequest.FilterRigor);
         }
@@ -314,6 +314,7 @@ namespace SLORM.Application.UnitTests.Contexts
         public void Filter_WhenColumnToFilterNotInTable_ShouldNotAddFilter(string columnName, string value, FilterRigor rigor, FilterMethod method)
         {
             // Arrange
+            var values = new List<string> { value, value };
             var connectionString = "Data Source=190.190.200.100,1433;Initial Catalog = myDataBase;User ID = myUsername;Password = myPassword;";
             var columnsInTable = new string[] { "column1", "column2", "column3" };
             var queryExecutorResolverMock = GetQueryExecutorResolverMockWithColumns(columnsInTable);
@@ -323,11 +324,11 @@ namespace SLORM.Application.UnitTests.Contexts
             dbConnectionMock.Setup(conn => conn.ConnectionString).Returns(connectionString);
             var ctx = new SLORMContext(dbConnectionMock.Object, connectionString);
 
-            var columnFilter = new ColumnFilterRequest(columnName, value, rigor, method);
+            var columnFilter = new ColumnFilterRequest(columnName, values, rigor, method);
             // Act
             ctx.Filter(columnFilter);
             // Assert
-            var filterRequest = ctx.ColumnsToFilter.FirstOrDefault(c => c.Column.Name == columnFilter.ColumnName && c.FilterMethod == columnFilter.FilterMethod && c.FilterRigor == columnFilter.FilterRigor && c.Value == columnFilter.Value);
+            var filterRequest = ctx.ColumnsToFilter.FirstOrDefault(c => c.Column.Name == columnFilter.ColumnName && c.FilterMethod == columnFilter.FilterMethod && c.FilterRigor == columnFilter.FilterRigor);
             Assert.Equal(default(ColumnFilter), filterRequest);
         }
 
@@ -340,6 +341,7 @@ namespace SLORM.Application.UnitTests.Contexts
         public void Filter_WhenColumnToFilterAlreadyInFilterList_ShouldDuplicateFilter(string columnName, string value, FilterRigor rigor, FilterMethod method)
         {
             // Arrange
+            var values = new List<string> { value, value };
             var connectionString = "Data Source=190.190.200.100,1433;Initial Catalog = myDataBase;User ID = myUsername;Password = myPassword;";
             var columnsInTable = new string[] { "column1", "column2", "column3" };
             var queryExecutorResolverMock = GetQueryExecutorResolverMockWithColumns(columnsInTable);
@@ -349,12 +351,12 @@ namespace SLORM.Application.UnitTests.Contexts
             dbConnectionMock.Setup(conn => conn.ConnectionString).Returns(connectionString);
             var ctx = new SLORMContext(dbConnectionMock.Object, connectionString);
 
-            var columnFilter = new ColumnFilterRequest(columnName, value, rigor, method);
+            var columnFilter = new ColumnFilterRequest(columnName, values, rigor, method);
             ctx.Filter(columnFilter);
             // Act
             ctx.Filter(columnFilter);
             // Assert
-            var filterRequestCount = ctx.ColumnsToFilter.Where(c => c.Column.Name == columnFilter.ColumnName && c.FilterMethod == columnFilter.FilterMethod && c.FilterRigor == columnFilter.FilterRigor && c.Value == columnFilter.Value).Count();
+            var filterRequestCount = ctx.ColumnsToFilter.Where(c => c.Column.Name == columnFilter.ColumnName && c.FilterMethod == columnFilter.FilterMethod && c.FilterRigor == columnFilter.FilterRigor).Count();
             Assert.Equal(2, filterRequestCount);
         }
 
