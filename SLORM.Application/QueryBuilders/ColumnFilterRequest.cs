@@ -8,16 +8,16 @@ namespace SLORM.Application.QueryBuilders
     public class ColumnFilterRequest
     {
         public string ColumnName { get; set; }
-        public string Value { get; set; }
+        public ICollection<string> Values { get; set; }
         public FilterRigor FilterRigor { get; set; }
         public FilterMethod FilterMethod { get; set; }
 
         public ColumnFilterRequest() { }
 
-        public ColumnFilterRequest(string columnName, string value, FilterRigor filterRigor, FilterMethod filterMethod)
+        public ColumnFilterRequest(string columnName, ICollection<string> values, FilterRigor filterRigor, FilterMethod filterMethod)
         {
             this.ColumnName = columnName;
-            this.Value = value;
+            this.Values = values;
             this.FilterRigor = filterRigor;
             this.FilterMethod = filterMethod;
         }

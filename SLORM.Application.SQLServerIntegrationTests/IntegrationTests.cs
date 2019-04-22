@@ -228,7 +228,7 @@ namespace SLORM.Application.SQLServerIntegrationTests
         [InlineData("a")]
         [InlineData("a1")]
         [InlineData("3")]
-        public async Task Query_WhenFilterTextContainsExcluding_ShouldReturnSameAsLinq(string filterContent)
+        public async Task Query_WhenFilterTextContainsExcluding_ShouldReturnSameAsLinq(params string[] filterContent)
         {
             // Arrange
             var context = new SLORMContext(connection, TestTableManager.TableName);
