@@ -34,7 +34,6 @@ namespace SLORM.Application.QueryBuilders.SQLServer.StatementBuilders
                 if (statementText.Length == 0)
                     statementText += "WHERE ";
 
-
                 switch (currentFiltering.Column.DataType)
                 {
                     case ColumnDataType.Date:
@@ -69,7 +68,7 @@ namespace SLORM.Application.QueryBuilders.SQLServer.StatementBuilders
         private Statement getStringFilterClause(ColumnFilter filter)
         {
             var clauseParameters = new List<DBParameterKeyValue>();
-            var clauseText = $"{filter.Column.Name.SanitizeSQL()} ";
+            var clauseText = $"( {filter.Column.Name.SanitizeSQL()} ";
 
             for (var i = 0; i < filter.Values.Count(); i++)
             {
@@ -96,6 +95,7 @@ namespace SLORM.Application.QueryBuilders.SQLServer.StatementBuilders
                     clauseText += $"= {filterValueParameter.Key}";
                 }
             }
+            clauseText += " )";
 
             return new Statement(clauseText, clauseParameters);
         }
