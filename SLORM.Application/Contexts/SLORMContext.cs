@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace SLORM.Application.Contexts
 {
-    public class SLORMContext
+    public class SLORMContext : IDisposable
     {
         public string TableName { get; }
         public ICollection<TableColumn> ColumnsInTable { get; }
@@ -146,7 +146,11 @@ namespace SLORM.Application.Contexts
             if (column == null)
                 return this;
 
-            GroupBy(column.Name);
+            var alreadyGroupedByColumn = ColumnsToGroupBy.GetFromName(column.Name) != null
+                   || ColumnsToSum.GetFromName(column.Name) != null
+                   || ColumnsToCount.GetFromName(column.Name) != null;
+            if (!alreadyGroupedByColumn)
+                GroupBy(column.Name);
 
             var columnOrdering = new ColumnOrdering(column, orderingRequest);
             ColumnsToOrderBy.Add(columnOrdering);
@@ -252,5 +256,11 @@ namespace SLORM.Application.Contexts
             }
             return tableNames;
         }
-    }
+
+		public void Dispose()
+		{
+			Connection.Close();
+			Connection.Dispose();
+		}
+	}
 }

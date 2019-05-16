@@ -5,6 +5,7 @@ using System.Data.Common;
 using System.Data.SqlClient;
 using System.Threading.Tasks;
 using SLORM.Application.Contexts;
+using SLORM.Application.Exceptions;
 using SLORM.Application.Extensions;
 using SLORM.Application.QueryBuilders;
 using SLORM.Application.ValueObjects;
@@ -63,15 +64,27 @@ namespace SLORM.Application.QueryExecutors
             if (timeoutInSeconds <= 0)
                 throw new ArgumentOutOfRangeException(nameof(timeoutInSeconds));
 
-            using (var queryCommand = queryBuilder.GetReadQuery(context))
+            string commandQuery = string.Empty;
+            DbParameterCollection queryParams = null;
+            try
             {
-                await context.Connection.EnsureConnected();
-                queryCommand.Connection = (SqlConnection)context.Connection;
-                queryCommand.CommandTimeout = timeoutInSeconds;
-                var reader = await queryCommand.ExecuteReaderAsync();
+                using (var queryCommand = queryBuilder.GetReadQuery(context))
+                {
+                    queryParams = queryCommand.Parameters;
+                    commandQuery = queryCommand.CommandText;
 
-                var result = new QueryResult(reader);
-                return result;
+                    await context.Connection.EnsureConnected();
+                    queryCommand.Connection = (SqlConnection)context.Connection;
+                    queryCommand.CommandTimeout = timeoutInSeconds;
+                    var reader = await queryCommand.ExecuteReaderAsync();
+
+                    var result = new QueryResult(reader);
+                    return result;
+                }
+            }
+            catch(SqlException ex)
+            {
+                throw new SLORMSQLException(ex, commandQuery, queryParams);
             }
         }
     }

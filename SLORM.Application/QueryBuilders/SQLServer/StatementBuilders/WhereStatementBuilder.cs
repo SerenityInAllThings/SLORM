@@ -3,6 +3,7 @@ using SLORM.Application.Extensions;
 using SLORM.Application.ValueObjects;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 
@@ -147,6 +148,14 @@ namespace SLORM.Application.QueryBuilders.SQLServer.StatementBuilders
             for (var i = 0; i < filter.Values.Count(); i++)
             {
                 var currentValue = filter.Values.ElementAt(i);
+                DateTime parsedValue;
+                if (DateTime.TryParseExact(currentValue, "dd/MM/yyyy HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedValue) ||
+                    DateTime.TryParseExact(currentValue, @"yyyy-MM-dd\THH:mm:ss\Z", CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedValue) ||
+                    DateTime.TryParseExact(currentValue, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedValue))
+                {
+                    currentValue = $"{parsedValue.Year.ToString("D4")}-{parsedValue.Month.ToString("D2")}-{parsedValue.Day.ToString("D2")}";
+                    currentValue += $"T{parsedValue.Hour.ToString("D2")}:{parsedValue.Minute.ToString("D2")}:{parsedValue.Second.ToString("D2")}";
+                }
                 if (i != 0)
                     clauseText += " OR ";
 
