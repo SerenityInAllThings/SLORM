@@ -153,15 +153,16 @@ namespace SLORM.Application.QueryBuilders.SQLServer.StatementBuilders
                     DateTime.TryParseExact(currentValue, @"yyyy-MM-dd\THH:mm:ss\Z", CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedValue) ||
                     DateTime.TryParseExact(currentValue, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedValue))
                 {
+                    // Current format sample: '2019-05-14 14:44:39'
                     currentValue = $"{parsedValue.Year.ToString("D4")}-{parsedValue.Month.ToString("D2")}-{parsedValue.Day.ToString("D2")}";
-                    currentValue += $"T{parsedValue.Hour.ToString("D2")}:{parsedValue.Minute.ToString("D2")}:{parsedValue.Second.ToString("D2")}";
+                    currentValue += $" {parsedValue.Hour.ToString("D2")}:{parsedValue.Minute.ToString("D2")}:{parsedValue.Second.ToString("D2")}";
                 }
                 if (i != 0)
                     clauseText += " OR ";
 
                 if (filter.FilterRigor == FilterRigor.Contains)
                 {
-                    clauseText += $" CONVERT(varchar(25), {filter.Column.Name.SanitizeSQL()}, 126)";
+                    clauseText += $" CONVERT(varchar(19), {filter.Column.Name.SanitizeSQL()}, 20)";
 
                     if (filter.FilterMethod == FilterMethod.Excluding)
                         clauseText += " NOT";
@@ -172,7 +173,7 @@ namespace SLORM.Application.QueryBuilders.SQLServer.StatementBuilders
                 }
                 else if (filter.FilterRigor == FilterRigor.Equals)
                 {
-                    clauseText += $" {filter.Column.Name.SanitizeSQL()} ";
+                    clauseText += $" CONVERT(DATETIME, CONVERT(VARCHAR(19), {filter.Column.Name.SanitizeSQL()}, 20)) ";
 
                     if (filter.FilterMethod == FilterMethod.Excluding)
                         clauseText += "!";
