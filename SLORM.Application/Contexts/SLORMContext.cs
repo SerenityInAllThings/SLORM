@@ -8,7 +8,6 @@ using SLORM.Application.ValueObjects.SpecialCases;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -194,7 +193,7 @@ namespace SLORM.Application.Contexts
         {
             if (!ColumnsInTable.Any())
                 return false;
-            if (!ColumnsToGroupBy.Any() && !ColumnsToCount.Any())
+            if (!ColumnsToGroupBy.Any() && !ColumnsToCount.Any() && !ColumnsToSum.Any())
                 return false;
             return true;
         }

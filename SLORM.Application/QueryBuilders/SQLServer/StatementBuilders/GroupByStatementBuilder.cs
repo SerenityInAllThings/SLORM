@@ -11,6 +11,9 @@ namespace SLORM.Application.QueryBuilders.SQLServer.StatementBuilders
 
         public Statement GetStatement(ICollection<TableColumn> tableColumns, ICollection<TableColumn> groupByColumns)
         {
+            if (tableColumns == null || tableColumns.Count == 0 || groupByColumns == null || groupByColumns.Count == 0)
+                return new Statement(string.Empty, new List<DBParameterKeyValue>());
+
             var statementText = string.Empty;
             foreach (var currentGroupByColumn in groupByColumns)
             {

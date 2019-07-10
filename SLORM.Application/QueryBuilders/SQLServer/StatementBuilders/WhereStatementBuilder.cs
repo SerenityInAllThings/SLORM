@@ -75,7 +75,12 @@ namespace SLORM.Application.QueryBuilders.SQLServer.StatementBuilders
             {
                 var currentValue = filter.Values.ElementAt(i);
                 if (i != 0)
-                    clauseText += $" OR {filter.Column.Name.SanitizeSQL()} ";
+                {
+                    clauseText += filter.FilterMethod == FilterMethod.Including
+                        ? " OR"
+                        : " AND";
+                    clauseText += $" {filter.Column.Name.SanitizeSQL()} ";
+                }
 
                 if (filter.FilterRigor == FilterRigor.Contains)
                 {
@@ -111,7 +116,7 @@ namespace SLORM.Application.QueryBuilders.SQLServer.StatementBuilders
             {
                 var currentValue = filter.Values.ElementAt(i);
                 if (i != 0)
-                    clauseText += " OR ";
+                    clauseText += filter.FilterMethod == FilterMethod.Including ? " OR " : " AND ";
 
                 if (filter.FilterRigor == FilterRigor.Contains)
                 {
@@ -158,7 +163,7 @@ namespace SLORM.Application.QueryBuilders.SQLServer.StatementBuilders
                     currentValue += $" {parsedValue.Hour.ToString("D2")}:{parsedValue.Minute.ToString("D2")}:{parsedValue.Second.ToString("D2")}";
                 }
                 if (i != 0)
-                    clauseText += " OR ";
+                    clauseText += filter.FilterMethod == FilterMethod.Including ? " OR " : " AND ";
 
                 if (filter.FilterRigor == FilterRigor.Contains)
                 {

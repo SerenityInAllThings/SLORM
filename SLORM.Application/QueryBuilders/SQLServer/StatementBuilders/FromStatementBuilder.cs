@@ -15,7 +15,7 @@ namespace SLORM.Application.QueryBuilders.SQLServer.StatementBuilders
             if (string.IsNullOrWhiteSpace(tableName))
                 throw new ArgumentNullException(nameof(tableName));
 
-            var statementText = $"FROM {tableName.SanitizeSQL()}";
+            var statementText = $"FROM {tableName.SanitizeSQL()} (nolock)";
 
             return new Statement(statementText, new List<DBParameterKeyValue>());
         }
